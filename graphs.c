@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 // not implementing min, max, sleep (yet)
 // + -> plus, - -> minus, * -> mult, / -> div, + -> default value
@@ -34,6 +35,11 @@ struct Node {
     int constant;                 // constant involved, for eg. 1 in the case of A1 = B1 + 1 (toh A1 ka constant is 1)
     int old_val;                  // old value, to update the dependencies based on that
 };
+
+void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opcode, int new_constant);
+int calcValue(struct Node *node);
+void changeDeps(struct Node *node);
+void printNodeDetails(struct Node *node);
 
 /*
 // intended to make a topsort (but too complicated and unnecessary)
@@ -93,61 +99,160 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
         dep->dependencies[dep->depCount++] = node;
     }
 
+    // debugging
+    //printNodeDetails(node);
+    
+    
+    changeDeps(node);
 }
 
 int calcValue(struct Node *node) {
     if (node->dCount == 0) {
-        return node->constant; // No dependencies, value is the constant
+        return node->constant; // No dependencies, value equals constant
     }
 
-    switch (node->opcode) {
-        case '+':
-            if (node->dCount == 2) {
-                return node->dependent_upon[0]->value + node->dependent_upon[1]->value;
-            } else {
-                return node->dependent_upon[0]->value + node->constant;
+    if (node->opcode == '+') {
+        if (node->dCount == 2) {
+            return node->dependent_upon[0]->value + node->dependent_upon[1]->value;
+        }
+        return node->dependent_upon[0]->value + node->constant;
+    } else if (node->opcode == '-') {
+        if (node->dCount == 2) {
+            if (node->dependent_upon[0]) {
+                return node->dependent_upon[0]->value - node->dependent_upon[1]->value;
             }
-        case '-':
-            return node->dependent_upon[0]->value - node->dependent_upon[1]->value;
-        case '*':
+            return node->constant - node->dependent_upon[1]->value;
+        }
+        return node->dependent_upon[0]->value - node->constant;
+    } else if (node->opcode == '*') {
+        if (node->dCount == 2) {
             return node->dependent_upon[0]->value * node->dependent_upon[1]->value;
-        case '/':
+        }
+        return node->dependent_upon[0]->value * node->constant;
+    } else if (node->opcode == '/') {
+        if (node->dCount == 2) {
             if (node->dependent_upon[1]->value != 0) {
-                return node->dependent_upon[0]->value / node->dependent_upon[1]->value;
+                if (node->dependent_upon[0]) {
+                    return node->dependent_upon[0]->value / node->dependent_upon[1]->value;
+                }
+                return node->constant / node->dependent_upon[1]->value;
             } else {
                 printf("Error: Division by zero\n");
                 return 0;
             }
-        case 'M':
-            return (node->dependent_upon[0]->value > node->dependent_upon[1]->value) ? node->dependent_upon[0]->value : node->dependent_upon[1]->value;
-        case 'm':
-            return (node->dependent_upon[0]->value < node->dependent_upon[1]->value) ? node->dependent_upon[0]->value : node->dependent_upon[1]->value;
-        case 'l':
-            // Handle sleep operation if needed
-            break;
-        case 'S':
-            // Handle standard deviation calculation if needed
-            break;
-        case 'a':
-            return (node->dependent_upon[0]->value + node->dependent_upon[1]->value) / 2;
-        case 's':
-            return node->dependent_upon[0]->value + node->dependent_upon[1]->value;
-        default:
-            printf("Error: Unknown opcode\n");
+        }
+        if (node->constant != 0) {
+            return node->dependent_upon[0]->value / node->constant;
+        } else {
+            printf("Error: Division by zero\n");
             return 0;
+        }
+    } else if (node->opcode == 'M') {
+        int M = node->dependent_upon[0]->value;
+        for (int i = 1; i < node->dCount; i++) {
+            if (M < node->dependent_upon[i]->value) {
+                M = node->dependent_upon[i]->value;
+            }
+        }
+        return M;
+    } else if (node->opcode == 'm') {
+        int m = node->dependent_upon[0]->value;
+        for (int i = 1; i < node->dCount; i++) {
+            if (m > node->dependent_upon[i]->value) {
+                m = node->dependent_upon[i]->value;
+            }
+        }
+        return m;
+    } else if (node->opcode == 'S') {
+        double mean = 0;
+        for (int i = 0; i < node->dCount; i++) {
+            mean += node->dependent_upon[i]->value;
+        }
+        mean /= node->dCount;
+        double variance = 0;
+        for (int i = 0; i < node->dCount; i++) {
+            variance += pow(node->dependent_upon[i]->value - mean, 2);
+        }
+        variance /= node->dCount;
+        return (int)sqrt(variance);
+    } else if (node->opcode == 'a') {
+        int sum = 0;
+        for (int i = 0; i < node->dCount; i++) {
+            sum += node->dependent_upon[i]->value;
+        }
+        return sum / node->dCount;
+    } else if (node->opcode == 's') {
+        int total = 0;
+        for (int i = 0; i < node->dCount; i++) {
+            total += node->dependent_upon[i]->value;
+        }
+        return total;
+    } else {
+        printf("Error: Unknown opcode\n");
+        return 0;
     }
-    return 0; // Default return value if no case matches
 }
 
-struct Node* changeDeps(struct Node *node) {
+void changeDeps(struct Node *node) {
+    //printNodeDetails(node);
     for (int i = 0; i < node->depCount; i++) {
-        changeValOfDep(node, node->dependencies[i]);
+        node->dependencies[i]->value = calcValue(node->dependencies[i]);
+        changeDeps(node->dependencies[i]);
     }
-    
-    return node;
 }
 
-void changeValOfDep(struct Node *node, struct Node *dep) {
+void printNodeDetails(struct Node *node) {
+    printf("Node %s:\n", node->name);
+    printf("  Value: %d\n", node->value);
+    printf("  Dependencies: ");
+    for (int i = 0; i < node->depCount; i++) {
+        printf("%s ", node->dependencies[i]->name);
+    }
+    printf("\n  Dependent upon: ");
+    for (int i = 0; i < node->dCount; i++) {
+        printf("%s ", node->dependent_upon[i]->name);
+    }
+    printf("\n");
+}
+
+int main() {
+    // Create nodes
+    struct Node A1 = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0};
+    struct Node B1 = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0};
+    struct Node B2 = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0};
+    struct Node C1 = {"C1", 0, NULL, 0, NULL, 0, '+', 0, 0};
+    struct Node D1 = {"D1", 0, NULL, 0, NULL, 0, '+', 0, 0};
+
+    // Initialize values using updateNode
+    updateNode(&B1, NULL, 0, '+', 3);
+    updateNode(&B2, NULL, 0, '+', 4);
+
+    // Set dependencies
+    struct Node* A1_deps[] = {&B1, &B2};
+    struct Node* C1_deps[] = {&A1, &B2};
+    struct Node* D1_deps[] = {&A1, &C1};
+    struct Node* C1_deps_2[] = {&B2};
+
+    // Update nodes
+    updateNode(&A1, A1_deps, 2, '+', 0);
+    updateNode(&C1, C1_deps, 2, '*', 0);
+    updateNode(&D1, D1_deps, 2, 'M', 0);
+    updateNode(&C1, C1_deps_2, 1, '+', 8);
+    updateNode(&B1, NULL, 0, '+', 12);
+    // 16 12 4 12 16
+
+    // Print results
+    printf("\n\n\n");
+    printNodeDetails(&A1);
+    printNodeDetails(&B1);
+    printNodeDetails(&B2);
+    printNodeDetails(&C1);
+    printNodeDetails(&D1);
+
+    return 0;
+}
+
+/*void changeValOfDep(struct Node *node, struct Node *dep) {
     char opcode = dep->opcode;
     if (opcode == '+' || opcode == 's' || (opcode == '-' && dep->dependent_upon[0] == node)) {
         dep->value += node->value - node->old_val;
@@ -168,7 +273,7 @@ void changeValOfDep(struct Node *node, struct Node *dep) {
             }
         }
     }
-}
+}*/
 
 /*
 A1 = 3
