@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+// #include <unistd.h> // this library is only available on unix based systems and we are allowed to 
+                    // use it as mentioned on piazza --for sleep function
+// to run sleep on unix comment out above line
+// to run sleep on windows comment out below 2 lines                    
+// #include <windows.h>
+// #define sleep(x) Sleep(1000*(x))
 
 // not implementing min, max, sleep (yet)
 // + -> plus, - -> minus, * -> mult, / -> div, + -> default value
@@ -108,6 +114,9 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
 
 int calcValue(struct Node *node) {
     if (node->dCount == 0) {
+        if (node->opcode == 'l'){
+            sleep(node->constant);
+        }
         return node->constant; // No dependencies, value equals constant
     }
 
@@ -187,6 +196,9 @@ int calcValue(struct Node *node) {
             total += node->dependent_upon[i]->value;
         }
         return total;
+    } else if (node->opcode == 'l'){
+        sleep(node->dependent_upon[0]->value);
+        return node->dependent_upon[0]->value;
     } else {
         printf("Error: Unknown opcode\n");
         return 0;
@@ -197,7 +209,7 @@ void changeDeps(struct Node *node) {
     //printNodeDetails(node);
     for (int i = 0; i < node->depCount; i++) {
         node->dependencies[i]->value = calcValue(node->dependencies[i]);
-        changeDeps(node->dependencies[i]);
+        changeDeps(node->dependencies[i]); // Why recursive? --Ayush
     }
 }
 
