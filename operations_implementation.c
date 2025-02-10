@@ -5,15 +5,17 @@
                     // use it as mentioned on piazza --for sleep function
 // to run sleep on unix comment out above line
 // to run sleep on windows comment out below 2 lines                    
-// #include <windows.h>
-// #define sleep(x) Sleep(1000*(x))
-
-// not implementing min, max, sleep (yet)
-// + -> plus, - -> minus, * -> mult, / -> div, + -> default value
+#include <windows.h>
+#define sleep(x) Sleep(1000*(x))
 
 
 
 /*
+ALL OPERATIONS IMPLEMENTED
+TOPOLOGICAL SORT IMPLEMENTED TO OPTIMIZE THE TIME COMPLEXITY
+MADE 2 TESTCASES (DIDN'T TEST ALL OPERATIONS)
+
+
 A1 = 2 - B1
 A1 = B1 - 2
 
@@ -24,7 +26,7 @@ A1 = B1 * B2        *
 A1 = B1 / B2        /
 A1 = max(B1, B2)    M
 A1 = min(B1, B2)    m
-A1 = sleep(B1)      l    => please handle sleep
+A1 = sleep(B1)      l
 A1 = stdev(B1, B2)  S
 A1 = avg(B1, B2)    a
 A1 = sum(B1, B2)    s
@@ -40,26 +42,37 @@ struct Node {
     char opcode;                  // opcode for dep_upon
     int constant;                 // constant involved, for eg. 1 in the case of A1 = B1 + 1 (toh A1 ka constant is 1)
     int old_val;                  // old value, to update the dependencies based on that
+    int visited;                  // for topsort
 };
 
 void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opcode, int new_constant);
 int calcValue(struct Node *node);
-void changeDeps(struct Node *node);
 void printNodeDetails(struct Node *node);
+void sort(struct Node **order[], int *length, struct Node *node);
+void set_visited_to_zero(struct Node *order[], int length);
 
-/*
-// intended to make a topsort (but too complicated and unnecessary)
 
-void sort(struct Node *order[], int *length, struct Node *node) {
+
+// taking a pointer to a pointer to a node array
+// (because realloc may change the address of the array of pointers entirely, and that wouldn't be reflected outside the function)
+void sort(struct Node **order[], int *length, struct Node *node) {
     node->visited = 1;
     for (int i = 0; i < node->depCount; i++) {
         if (!(node->dependencies[i]->visited)) {
             sort(order, length, node->dependencies[i]);
         }
     }
-    order[(*length)++] = node;
+    // append the node to the order array, by increasing its size too
+    // printf("%s %d\n", node->name, *length);
+    *order = realloc(*order, (*length + 1) * sizeof(struct Node*));
+    (*order)[(*length)++] = node;
 }
-*/
+
+void set_visited_to_zero(struct Node *order[], int length) {
+    for (int i = 0; i < length; i++) {
+        order[i]->visited = 0;
+    }
+}
 
 void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opcode, int new_constant) {
     // A1 = 2 - B1, expecting dep_upon = [NULL, B1], dCount = 2
@@ -107,9 +120,20 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
 
     // debugging
     //printNodeDetails(node);
+
+    struct Node **order = malloc(sizeof(struct Node *));
+    int length = 0;
+    sort(&order, &length, node);
+    set_visited_to_zero(order, length);
+    /*for (int i = 0; i < length; i++) {
+        printf("%s ", order[i]->name);
+    }
+    printf("\n \t%d \n", length);*/
     
-    
-    changeDeps(node);
+    for (int i = length - 1; i >= 0; i--) {
+        order[i]->value = calcValue(order[i]);
+    }
+    free(order);
 }
 
 int calcValue(struct Node *node) {
@@ -205,14 +229,6 @@ int calcValue(struct Node *node) {
     }
 }
 
-void changeDeps(struct Node *node) {
-    //printNodeDetails(node);
-    for (int i = 0; i < node->depCount; i++) {
-        node->dependencies[i]->value = calcValue(node->dependencies[i]);
-        changeDeps(node->dependencies[i]); // Why recursive? --Ayush
-    }
-}
-
 void printNodeDetails(struct Node *node) {
     printf("Node %s:\n", node->name);
     printf("  Value: %d\n", node->value);
@@ -228,12 +244,24 @@ void printNodeDetails(struct Node *node) {
 }
 
 int main() {
+    printf("-------------------- TC - 1 --------------------\n");
+    /*
+    B1 = 3
+    B2 = 4
+    A1 = B1 + B2
+    C1 = A1 * B2
+    D1 = A1 * C1
+    C1 = B2 + 8
+    B1 = 12
+    16 12 4 12 16
+    */
+
     // Create nodes
-    struct Node A1 = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0};
-    struct Node B1 = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0};
-    struct Node B2 = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0};
-    struct Node C1 = {"C1", 0, NULL, 0, NULL, 0, '+', 0, 0};
-    struct Node D1 = {"D1", 0, NULL, 0, NULL, 0, '+', 0, 0};
+    struct Node A1 = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B1 = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B2 = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node C1 = {"C1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node D1 = {"D1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
 
     // Initialize values using updateNode
     updateNode(&B1, NULL, 0, '+', 3);
@@ -254,12 +282,48 @@ int main() {
     // 16 12 4 12 16
 
     // Print results
-    printf("\n\n\n");
     printNodeDetails(&A1);
     printNodeDetails(&B1);
     printNodeDetails(&B2);
     printNodeDetails(&C1);
     printNodeDetails(&D1);
+
+    
+    printf("\n\n-------------------- TC - 2 --------------------\n");
+
+
+    struct Node A1_ = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B1_ = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B2_ = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B3_ = {"B3", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B4_ = {"B4", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+
+    /*
+    A1 = 3
+    B1 = A1 + 1
+    B3 = B1 * 2
+    B2 = A1 - B3
+    B4 = A1 + B2
+    A1 = 4
+    4 5 -6 10 -2
+    */ 
+    updateNode(&A1_, NULL, 0, '+', 3);
+    struct Node* B1_deps[] = {&A1_};
+    updateNode(&B1_, B1_deps, 1, '+', 1);
+    struct Node* B3_deps[] = {&B1_};
+    updateNode(&B3_, B3_deps, 1, '*', 2);
+    struct Node* B2_deps[] = {&A1_, &B3_};
+    updateNode(&B2_, B2_deps, 2, '-', 0);
+    struct Node* B4_deps[] = {&A1_, &B2_};
+    updateNode(&B4_, B4_deps, 2, '+', 0);
+    updateNode(&A1_, NULL, 0, '+', 4);
+
+    printNodeDetails(&A1_);
+    printNodeDetails(&B1_);
+    printNodeDetails(&B2_);
+    printNodeDetails(&B3_);
+    printNodeDetails(&B4_);
+
 
     return 0;
 }
@@ -286,11 +350,3 @@ int main() {
         }
     }
 }*/
-
-/*
-A1 = 3
-A2 = 4
-B1 = A1*A2 = 12
-A1 = 5
-B1_old + (A1_new - A1_old) * A2 = 12 + 2 * 4 = 20
-*/
