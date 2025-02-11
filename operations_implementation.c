@@ -10,6 +10,11 @@
 
 
 
+// even though the logic is complete and bug free (hopefully)
+// ill making some edits in the file here and there, to make it faster and more memory efficient
+// ~ namit
+
+
 /*
 ALL OPERATIONS IMPLEMENTED
 TOPOLOGICAL SORT IMPLEMENTED TO OPTIMIZE THE TIME COMPLEXITY
@@ -83,15 +88,16 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
     for (int i = 0; i < node->dCount; i++) {
         // for each element in dep_upon, remove node from its dependencies array
         struct Node *par = node->dependent_upon[i];
-        struct Node **new_dependencies = malloc((par->depCount - 1) * sizeof(struct Node*));
-        for (int j = 0, k = 0; j < par->depCount; j++) {
-            if (par->dependencies[j] != node) {
-                new_dependencies[k++] = par->dependencies[j];
+        int j;
+        for (j = 0; j < par->depCount; j++) {
+            if (par->dependencies[j] == node) {
+                break;
             }
         }
-        free(par->dependencies);
-        par->dependencies = new_dependencies;
-        par->depCount--;
+        for (int k = j; k < par->depCount - 1; k++) {
+            par->dependencies[k] = par->dependencies[k + 1];
+        }
+        par->dependencies = realloc(par->dependencies, (--(par->depCount)) * sizeof(struct Node *));
     }
     // empty the dep_upon array
     free(node->dependent_upon);
