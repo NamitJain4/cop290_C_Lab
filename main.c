@@ -10,30 +10,35 @@ float exec_time = 0.0;
 char *exec_status = "ok";
 char *cmd;
 char *gp;
-char *lp;
 int cmdarr[7] = {0, 0, 0, 0, 0, 0, 0};
 int col = 0;
 int row = 0;
 
 /* Constants */
 char *OK = "ok";
-char *ERR1 = "unrecognized cmd";
-char *ERR2 = "invalid cell";
-char *ERR3 = "invalid range";
+char *ERR = "ParserEngineFailure";
 
 /* Spreadsheet params */
-int nrows = 999;
-int ncols = 18278;
+int nrows;
+int ncols;
 
 /* Prototypes */
 int parser(void);
-int parser_aux(void);
+int parse_cell(void);
+int parse_int(void);
+int parse_uint(void);
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc != 3) return -1;
+    gp = argv[1];
+    if (parse_uint() || *gp || (nrows = row) > 999) return -1;
+    gp = argv[2];
+    if (parse_uint() || *gp || (ncols = row) > 18278) return -1;
+
     char c; int len; int cap;
     while (1) {
-        if (print_sheet == 0) continue;
+        if (print_sheet && cmdarr[0] != -7) ; // call print_sheet
         /* Display prompt */
         printf("[%.1f] (%s) > ", exec_time, exec_status);
 
@@ -70,13 +75,7 @@ int main()
                 exec_status = OK;
                 break;
             case 1:
-                exec_status = ERR1;
-                break;
-            case 2:
-                exec_status = ERR2;
-                break;
-            case 3:
-                exec_status = ERR3;
+                exec_status = ERR;
                 break;
         }
 
@@ -89,43 +88,48 @@ int main()
 int parser()
 {
     gp = cmd;
-    char temp; char *temp1; char *temp2;
+    int status = 1; char *temp;
 
-    /* Cmd parsing */
-    while (*gp == ' ' || *gp == '\t')
-        gp++;
-    temp = *(gp + 1); *(gp + 1) = '\0';
-    if (strcmp(gp, "q") == 0)
+    /* Cmd test */
+    if ((status = strcmp(gp, "q")) == 0)
         cmdarr[0] = -1;
-    else if (strcmp(gp, "w") == 0)
-        cmdarr[0] = 1;
-    else if (strcmp(gp, "d") == 0)
-        cmdarr[0] = 2;
-    else if (strcmp(gp, "a") == 0)
-        cmdarr[0] = 3;
-    else if (strcmp(gp, "s") == 0)
-        cmdarr[0] = 4;
-    gp += 1; *gp = temp;
-    while (*gp == ' ' || *gp == '\t')
-        gp++;
-    if (cmdarr[0] != 0) {
-        if (*gp == '\0')
-            return 0;
-        else
+    else if ((status = strcmp(gp, "w")) == 0)
+        cmdarr[0] = -2;
+    else if ((status = strcmp(gp, "d")) == 0)
+        cmdarr[0] = -3;
+    else if ((status = strcmp(gp, "a")) == 0)
+        cmdarr[0] = -4;
+    else if ((status = strcmp(gp, "s")) == 0)
+        cmdarr[0] = -5;
+    else if ((status = strcmp(gp, "disable_output")) == 0) {
+        cmdarr[0] = -6; print_sheet = 0;
+    }
+    else if ((status = strcmp(gp, "enable_output")) == 0) {
+        cmdarr[0] = -7; print_sheet = 1;
+    }
+    if (status == 0)
+        return 0;
+
+    if (strncmp(gp, "scroll_to ", 10) == 0) {
+        gp += 10;
+        if (parse_cell() || *gp++ != '\0')
             return 1;
+        cmdarr[0] = -8; cmdarr[1] = col; cmdarr[2] = row;
+        return 0;
     }
     
-    gp -= 1;
-    /* Cell parsing */
-    if (parser_aux()) return 2;
-    if (col == 0 || row == 0 || *gp++ != '=')
-            return 1;
+    /* Formula parsing */
+    if (parse_cell() || *gp++ != '=')
+        return 1;
     cmdarr[0] = col; cmdarr[1] = row;
 
     /* Expression parsing */
-    temp1 = gp; temp2 = lp;
-    if (parser_aux()) return 2;
-    if (row != 0) {
+    status = 1; temp = gp;
+    if (status && (status = parse_cell()))
+        gp = temp;
+    if (status && (status = parse_int()))
+        gp = temp;
+    if (status == 0) {
         cmdarr[3] = col; cmdarr[4] = row;
         /* Assignment expression */
         if (*gp == '\0') {
@@ -143,79 +147,132 @@ int parser()
             cmdarr[2] = 4;
         else
             return 1;
-        if (parser_aux()) return 2;
-        if (row == 0 || *gp++ != '\0')
+        status = 1; temp = ++gp;
+        if (status && (status = parse_cell()))
+            gp = temp;
+        if (status && (status = parse_int()))
+            gp = temp;
+        if (status || *gp++ != '\0')
             return 1;
         cmdarr[5] = col; cmdarr[6] = row;
+        return 0;
     }
     /* Function */
-    else if (col != 0 && *gp == '(' ) {
-        *temp2 = '\0';
-        if (strcmp(temp1, "MIN") == 0)
+    else {
+        if (strncmp(gp, "MIN(", 4) == 0)
             cmdarr[2] = 5;
-        else if (strcmp(temp1, "MAX") == 0)
+        else if (strncmp(gp, "MAX(", 4) == 0)
             cmdarr[2] = 6;
-        else if (strcmp(temp1, "AVG") == 0)
+        else if (strncmp(gp, "AVG(", 4) == 0)
             cmdarr[2] = 7;
-        else if (strcmp(temp1, "SUM") == 0)
+        else if (strncmp(gp, "SUM(", 4) == 0)
             cmdarr[2] = 8;
-        else if (strcmp(temp1, "STDEV") == 0)
+        else if (strncmp(gp, "STDEV(", 6) == 0)
             cmdarr[2] = 9;
-        else if (strcmp(temp1, "SLEEP") == 0)
+        else if (strncmp(gp, "SLEEP(", 6) == 0)
             cmdarr[2] = 10;
         else
             return 1;
+
+        if (cmdarr[2] < 9)
+            gp += 4;
+        else
+            gp += 6;
+        
         if (cmdarr[2] == 10) {
-            if (parser_aux()) return 2;
-            if (row == 0 || *gp++ != ')')
+            if (parse_uint() || *gp++ != ')')
                 return 1;
             cmdarr[3] = col; cmdarr[4] = row;
         }
         else {
-            if (parser_aux()) return 2;
-            if (col == 0 || row == 0 || *gp++ != ':')
+            if (parse_cell() || *gp++ != ':')
                 return 1;
             cmdarr[3] = col; cmdarr[4] = row;
-            if (parser_aux()) return 2;
-            if (col == 0 || row == 0 || *gp++ != ')')
+            if (parse_cell() || *gp++ != ')')
                 return 1;
             cmdarr[5] = col; cmdarr[6] = row;
 
             /* Invalid range checks */
             if ((cmdarr[3] > cmdarr[5]) || (cmdarr[4] > cmdarr[6]))
-                return 3;
+                return 1;
         }
-        while (*gp == ' ' || *gp == '\t')
-            gp++;
+
         if (*gp == '\0')
             return 0;
         else
             return 1;
     }
-    else
-        return 1;
 }
 
-int parser_aux()
+int parse_cell()
 {
     col = row = 0;
 
-    /* Cell type parsing */
-    while (*gp == ' ' || *gp == '\t')
+    /* Cell parsing */
+    while (*gp >= 65 && *gp <= 90) {
+        if (col <= (INT_MAX - (*gp - 64)) / 26)
+            col = col*26 + (*gp - 64);
+        else
+            col = INT_MAX;
         gp++;
-    while (*gp >= 65 && *gp <= 90 && col <= ncols)
-        if (col <= ncols)
-            col = col*26 + (*gp++ - 64);
-    lp = gp;
-    while (*gp >= 48 && *gp <= 57 && row <= nrows)
-        if (row <= nrows)
-            row = row*10 + (*gp++ - 48);
-    while (*gp == ' ' || *gp == '\t')
+    }
+    if (*gp == 48) return 1;
+    while (*gp >= 48 && *gp <= 57) {
+        if (row <= (INT_MAX - (*gp - 48)) / 10)
+            row = row*10 + (*gp - 48);
+        else
+            row = INT_MAX;
         gp++;
-
-    /* Invalid cell flags*/
-    if ((col > ncols) || (row > nrows) || ((row == 0) && (lp != gp)))
-        return 1;
+    }
     
-    return 0;
+    return ((col <= 0) || (col > ncols) || (row <= 0) || (row > nrows));
+}
+
+int parse_int()
+{
+    int sign = 0;
+    col = row = 0;
+
+    /* Int parsing */
+    if (*gp == '+' || *gp == '-') {
+        sign = (*gp == '-');
+        gp++;
+    }
+
+    if (sign) {
+        while (*gp >= 48 && *gp <= 57) {
+            if (row >= (INT_MIN + (*gp - 48)) / 10)
+                row = row*10 - (*gp - 48);
+            else
+                row = INT_MIN;
+            gp++;
+        }            
+    }
+    else {
+        while (*gp >= 48 && *gp <= 57) {
+            if (row <= (INT_MAX - (*gp - 48)) / 10)
+                row = row*10 + (*gp - 48);
+            else
+                row = INT_MAX;
+            gp++;
+        }
+    }
+
+    return (row == 0);
+}
+
+int parse_uint()
+{
+    col = row = 0;
+
+    /* Uint parsing */
+    while (*gp >= 48 && *gp <= 57) {
+        if (row <= (INT_MAX - (*gp - 48)) / 10)
+            row = row*10 + (*gp - 48);
+        else
+            row = INT_MAX;
+        gp++;
+    }
+
+    return (row == 0);
 }
