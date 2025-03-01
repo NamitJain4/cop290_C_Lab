@@ -262,47 +262,76 @@ int main() {
     16 12 4 12 16
     */
 
-    // Create nodes
-    struct Node A1 = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B1 = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B2 = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node C1 = {"C1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node D1 = {"D1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    // Create nodes on the heap
+    struct Node *A1 = malloc(sizeof(struct Node));
+    struct Node *B1 = malloc(sizeof(struct Node));
+    struct Node *B2 = malloc(sizeof(struct Node));
+    struct Node *C1 = malloc(sizeof(struct Node));
+    struct Node *D1 = malloc(sizeof(struct Node));
+
+    // Initialize nodes
+    *A1 = (struct Node){"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B1 = (struct Node){"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B2 = (struct Node){"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *C1 = (struct Node){"C1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *D1 = (struct Node){"D1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
 
     // Initialize values using updateNode
-    updateNode(&B1, NULL, 0, '+', 3);
-    updateNode(&B2, NULL, 0, '+', 4);
+    updateNode(B1, NULL, 0, '+', 3);
+    updateNode(B2, NULL, 0, '+', 4);
 
     // Set dependencies
-    struct Node* A1_deps[] = {&B1, &B2};
-    struct Node* C1_deps[] = {&A1, &B2};
-    struct Node* D1_deps[] = {&A1, &C1};
-    struct Node* C1_deps_2[] = {&B2};
+    struct Node* A1_deps[] = {B1, B2};
+    struct Node* C1_deps[] = {A1, B2};
+    struct Node* D1_deps[] = {A1, C1};
+    struct Node* C1_deps_2[] = {B2};
 
     // Update nodes
-    updateNode(&A1, A1_deps, 2, '+', 0);
-    updateNode(&C1, C1_deps, 2, '*', 0);
-    updateNode(&D1, D1_deps, 2, 'M', 0);
-    updateNode(&C1, C1_deps_2, 1, '+', 8);
-    updateNode(&B1, NULL, 0, '+', 12);
+    updateNode(A1, A1_deps, 2, '+', 0);
+    updateNode(C1, C1_deps, 2, '*', 0);
+    updateNode(D1, D1_deps, 2, 'M', 0);
+    updateNode(C1, C1_deps_2, 1, '+', 8);
+    updateNode(B1, NULL, 0, '+', 12);
     // 16 12 4 12 16
 
     // Print results
-    printNodeDetails(&A1);
-    printNodeDetails(&B1);
-    printNodeDetails(&B2);
-    printNodeDetails(&C1);
-    printNodeDetails(&D1);
+    printNodeDetails(A1);
+    printNodeDetails(B1);
+    printNodeDetails(B2);
+    printNodeDetails(C1);
+    printNodeDetails(D1);
 
-    
+    // Free allocated memory
+    free(A1->dependencies);
+    free(A1->dependent_upon);
+    free(A1);
+    free(B1->dependencies);
+    free(B1->dependent_upon);
+    free(B1);
+    free(B2->dependencies);
+    free(B2->dependent_upon);
+    free(B2);
+    free(C1->dependencies);
+    free(C1->dependent_upon);
+    free(C1);
+    free(D1->dependencies);
+    free(D1->dependent_upon);
+    free(D1);
+
     printf("\n\n-------------------- TC - 2 --------------------\n");
 
+    struct Node *A1_ = malloc(sizeof(struct Node));
+    struct Node *B1_ = malloc(sizeof(struct Node));
+    struct Node *B2_ = malloc(sizeof(struct Node));
+    struct Node *B3_ = malloc(sizeof(struct Node));
+    struct Node *B4_ = malloc(sizeof(struct Node));
 
-    struct Node A1_ = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B1_ = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B2_ = {"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B3_ = {"B3", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
-    struct Node B4_ = {"B4", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    // Initialize nodes
+    *A1_ = (struct Node){"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B1_ = (struct Node){"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B2_ = (struct Node){"B2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B3_ = (struct Node){"B3", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    *B4_ = (struct Node){"B4", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
 
     /*
     A1 = 3
@@ -313,46 +342,39 @@ int main() {
     A1 = 4
     4 5 -6 10 -2
     */ 
-    updateNode(&A1_, NULL, 0, '+', 3);
-    struct Node* B1_deps[] = {&A1_};
-    updateNode(&B1_, B1_deps, 1, '+', 1);
-    struct Node* B3_deps[] = {&B1_};
-    updateNode(&B3_, B3_deps, 1, '*', 2);
-    struct Node* B2_deps[] = {&A1_, &B3_};
-    updateNode(&B2_, B2_deps, 2, '-', 0);
-    struct Node* B4_deps[] = {&A1_, &B2_};
-    updateNode(&B4_, B4_deps, 2, '+', 0);
-    updateNode(&A1_, NULL, 0, '+', 4);
+    updateNode(A1_, NULL, 0, '+', 3);
+    struct Node* B1_deps_[] = {A1_};
+    updateNode(B1_, B1_deps_, 1, '+', 1);
+    struct Node* B3_deps_[] = {B1_};
+    updateNode(B3_, B3_deps_, 1, '*', 2);
+    struct Node* B2_deps_[] = {A1_, B3_};
+    updateNode(B2_, B2_deps_, 2, '-', 0);
+    struct Node* B4_deps_[] = {A1_, B2_};
+    updateNode(B4_, B4_deps_, 2, '+', 0);
+    updateNode(A1_, NULL, 0, '+', 4);
 
-    printNodeDetails(&A1_);
-    printNodeDetails(&B1_);
-    printNodeDetails(&B2_);
-    printNodeDetails(&B3_);
-    printNodeDetails(&B4_);
+    printNodeDetails(A1_);
+    printNodeDetails(B1_);
+    printNodeDetails(B2_);
+    printNodeDetails(B3_);
+    printNodeDetails(B4_);
 
+    // Free allocated memory
+    free(A1_->dependencies);
+    free(A1_->dependent_upon);
+    free(A1_);
+    free(B1_->dependencies);
+    free(B1_->dependent_upon);
+    free(B1_);
+    free(B2_->dependencies);
+    free(B2_->dependent_upon);
+    free(B2_);
+    free(B3_->dependencies);
+    free(B3_->dependent_upon);
+    free(B3_);
+    free(B4_->dependencies);
+    free(B4_->dependent_upon);
+    free(B4_);
 
     return 0;
 }
-
-/*void changeValOfDep(struct Node *node, struct Node *dep) {
-    char opcode = dep->opcode;
-    if (opcode == '+' || opcode == 's' || (opcode == '-' && dep->dependent_upon[0] == node)) {
-        dep->value += node->value - node->old_val;
-    }
-    else if (opcode == '-') {
-        dep->value += node->old_val - node->value; 
-    }
-    else if (opcode == '*') {
-        if (dep->dCount == 1) {
-            dep->value += (node->value - node->old_val) * dep->constant;
-        }
-        else {
-            if (node == dep->dependent_upon[0]) {
-                dep->value += (node->value - node->old_val) * dep->dependent_upon[1]->value;
-            }
-            else {
-                dep->value += (node->value - node->old_val) * dep->dependent_upon[0]->value;
-            }
-        }
-    }
-}*/
