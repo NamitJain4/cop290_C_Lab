@@ -1,14 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-
-extern int rows; // (1..)
-extern int cols; // (1..)
-extern int sheet[1000][10000]; // this sheet length can be variable
-extern int print_arr[9];
 /*
 for print_arr -----------------------------------------------------------------
 0th index - disable(0 or 1)
@@ -43,15 +34,15 @@ void printSheet () {
                 col_multiple = MAX(col_multiple - 10, 1);
                 break;
             case (int)'s':
-                temp = MAX((rows-9), 1);
-                if ((row_multiple+10) > rows){
+                temp = MAX((nrows-9), 1);
+                if ((row_multiple+10) > nrows){
                     break;
                 }
                 row_multiple = MIN(row_multiple + 10, temp);
                 break;
             case (int)'d':
-                temp = MAX((cols-9), 1);
-                if ((col_multiple+10) > cols){
+                temp = MAX((ncols-9), 1);
+                if ((col_multiple+10) > ncols){
                     break;
                 }
                 col_multiple = MIN(col_multiple + 10, temp);
@@ -67,8 +58,8 @@ void printSheet () {
         return;
     }
 
-    int max_col = MIN(col_multiple + 8, cols - 1);
-    int max_row = MIN(row_multiple + 8, rows - 1);
+    int max_col = MIN(col_multiple + 8, ncols - 1);
+    int max_row = MIN(row_multiple + 8, nrows - 1);
     int min_col = MAX(col_multiple - 1, 0);
     int min_row = MAX(row_multiple - 1, 0);
 
@@ -95,7 +86,18 @@ void printSheet () {
         printf("\n");
         printf("%d", (i + 1));
         for (int j = min_col; j <= max_col; j++) {
-            printf("\t%d", sheet[i][j]);
+            int index = i*nrows + j;
+            if (lookup[index] == NULL){
+                printf("\t%d", 0);
+            }
+            else{
+                if (lookup[index]->is_err){
+                    printf("\tERR");
+                }
+                else{
+                    printf("\t%d", lookup[index]->value);
+                }
+            }
         }
     }
     printf("\n");

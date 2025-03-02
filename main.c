@@ -1,8 +1,5 @@
 /* Scanner + Parser */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 
 /* Variables */
 float exec_time = 0.0;
@@ -15,18 +12,6 @@ int row = 0;
 
 int print_arr[9] = {0, 0, 0, 0, 0, 0, 0, 1, 1};
 
-struct Node {
-    char *name;                   // name for eg. B1
-    int value;                    // final calculated value
-    struct Node **dependencies;   // array of all node pointers dependent upon current node
-    int depCount;                 // length of the dependencies array
-    struct Node **dependent_upon; // all the nodes in the rhs such that current node was in the lhs
-    int dCount;                   // number of nodes the current node is dependent upon
-    char opcode;                  // opcode for dep_upon
-    int constant;                 // constant involved, for eg. 1 in the case of A1 = B1 + 1 (toh A1 ka constant is 1)
-    int visited;                  // for topsort
-    int is_err;                   // to check if the node is an error node
-};
 struct Node **lookup;
 
 /* Constants */
@@ -44,9 +29,6 @@ int parse_int(void);
 int parse_uint(void);
 int process_cmdarr(void);
 void nalloc(int col, int row);
-
-void printSheet(void);
-void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opcode, int new_constant);
 
 int main(int argc, char *argv[])
 {
