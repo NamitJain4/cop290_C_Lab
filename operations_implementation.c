@@ -96,7 +96,7 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
     int length = 0;
     int cycle = 0;
     for (int i = 0; i < dCount; i++) {
-        dep_upon[i]->visited = 1;
+        dep_upon[i]->visited = 1;   // (fix) dep_upon[i] can be NULL also
     }
     sort(&order, &length, node, &cycle);
     set_visited_to_zero(order, length);
@@ -163,22 +163,24 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
 
 void set_node_to_error(struct Node *node) {
     node->is_err = 1;
-    free(node->dependencies);
-    node->dependencies = NULL;
+    free(node->dependencies);                           // (fix) dependencies should not be free they also should be
+    node->dependencies = NULL;                          // set to err and dont remove dependencies
     node->depCount = 0;
 }
 
 int calcValue(struct Node *node) {
     if (node->is_err) {
-        free(node->dependencies);
-        node->dependencies = NULL;
+        free(node->dependencies);                       // (fix) dependencies should not be free they also should be
+        node->dependencies = NULL;                      // set to err and dont remove dependencies
         node->depCount = 0;        
     }
     node->is_err = 0;
 
     if (node->dCount == 0) {
         if (node->opcode == 'l'){
-            sleep(node->constant);
+            if (node->constant > 0){
+                sleep(node->constant);
+            }            
         }
         return node->constant; // No dependencies, value equals constant
     }
@@ -269,7 +271,9 @@ int calcValue(struct Node *node) {
         }
         return total;
     } else if (node->opcode == 'l'){
-        sleep(node->dependent_upon[0]->value);
+        if (node->dependent_upon[0]->value > 0){
+            sleep(node->dependent_upon[0]->value);
+        }        
         return node->dependent_upon[0]->value;
     } else {
         printf("Error: Unknown opcode\n");
