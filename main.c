@@ -2,13 +2,15 @@
 #include "common.h"
 
 /* Variables */
-float exec_time = clock();
+int flag = 0;
+float exec_time = 0.0;
 char *exec_status = "ok";
 char *cmd;
 char *gp;
 int cmdarr[7] = {0, 0, 0, 0, 0, 0, 0};
 int col = 0;
 int row = 0;
+time_t start, end;
 
 int print_arr[9] = {0, 0, 0, 0, 0, 0, 0, 1, 1};
 
@@ -16,7 +18,8 @@ struct Node **lookup;
 
 /* Constants */
 char *OK = "ok";
-char *ERR = "ParserEngineFailure";
+char *ERR1 = "unrecognized cmd";
+char *ERR2 = "cycle detected";
 
 /* Spreadsheet params */
 int nrows;
@@ -49,10 +52,12 @@ int main(int argc, char *argv[])
         printSheet();
 
         /* Calculate time elapsed */
-        exec_time = (double)(clock() - exec_time) / CLOCKS_PER_SEC;
+        time(&end);
+        if (flag) exec_time = (double)difftime(end, start);
 
         /* Display prompt */
         printf("[%.1f] (%s) > ", exec_time, exec_status);
+        flag = 1;
 
         /* Read input */
         len = 0; cap = 1;
@@ -69,7 +74,7 @@ int main(int argc, char *argv[])
         cmd[len] = '\0';
 
         /* Initialize timer */
-        exec_time = clock();
+        time(&start);
 
         /* Initialize */
         for (i = 0; i < 7; i++)
@@ -78,7 +83,6 @@ int main(int argc, char *argv[])
             print_arr[i] = 0;
 
         /* Parse input */
-        // printf("%s\n", cmd);
         c = parser();
         /*
         printf("cmdarr[]:");
@@ -95,7 +99,7 @@ int main(int argc, char *argv[])
                 process_cmdarr();
                 break;
             case 1:
-                exec_status = ERR;
+                exec_status = ERR1;
                 break;
         }
 
@@ -256,7 +260,7 @@ int parse_cell()
 
 int parse_int()
 {
-    int sign = 0;
+    int sign = 0; char *temp;
     col = row = 0;
 
     /* Int parsing */
@@ -265,6 +269,7 @@ int parse_int()
         gp++;
     }
 
+    temp = gp;
     if (sign) {
         while (*gp >= '0' && *gp <= '9') {
             if (row >= (INT_MIN + (*gp - '0')) / 10)
@@ -284,11 +289,12 @@ int parse_int()
         }
     }
 
-    return (row == 0);
+    return (row == 0 && gp == temp);
 }
 
 int parse_uint()
 {
+    char *temp;
     col = row = 0;
 
     /* Uint parsing */
@@ -300,7 +306,7 @@ int parse_uint()
         gp++;
     }
 
-    return (row == 0);
+    return (row == 0 && gp == temp);
 }
 
 int process_cmdarr()
@@ -314,8 +320,9 @@ int process_cmdarr()
 
     /* Simple assignment expression */
     if (cmdarr[2] == 0) {
-        if (col1 == 0)
-            updateNode(lookup[i], NULL, 0, '+', row1);
+        if (cmdarr[3] == 0) {
+            updateNode(lookup[i], NULL, 0, '+', cmdarr[4]);
+        }
         else {
             nalloc(col1, row1);
             struct Node **dep_upon = (struct Node **)malloc(sizeof(struct Node *));
@@ -325,62 +332,62 @@ int process_cmdarr()
     }
     /* Arithmetic expression */
     else if (cmdarr[2] >= 1 && cmdarr[2] <= 4) {
-        if (col1 == 0 && col2 == 0) {
+        if (cmdarr[3] == 0 && cmdarr[5] == 0) {
             switch (cmdarr[2]) {
                 case 1:
-                    updateNode(lookup[i], NULL, 0, '+', row1 + row2);
+                    updateNode(lookup[i], NULL, 0, '+', cmdarr[4] + cmdarr[6]);
                     break;
                 case 2:
-                    updateNode(lookup[i], NULL, 0, '-', row1 - row2);
+                    updateNode(lookup[i], NULL, 0, '-', cmdarr[4] - cmdarr[6]);
                     break;
                 case 3:
-                    updateNode(lookup[i], NULL, 0, '*', row1 * row2);
+                    updateNode(lookup[i], NULL, 0, '*', cmdarr[4] * cmdarr[6]);
                     break;
                 case 4:
-                    if (row2 == 0) {
-                        lookup[i]->is_err = 1;
+                    if (cmdarr[6] == 0) {
                         updateNode(lookup[i], NULL, 0, '/', 0);
+                        lookup[i]->is_err = 1;
                     }
                     else
-                        updateNode(lookup[i], NULL, 0, '/', row1 / row2);
+                        updateNode(lookup[i], NULL, 0, '/', cmdarr[4] / cmdarr[6]);
                     break;
             }
         }
-        else if (col1 == 0) {
+        else if (cmdarr[3] == 0) {
             nalloc(col2, row2);
             struct Node **dep_upon = (struct Node **)malloc(2 * sizeof(struct Node *));
             dep_upon[0] = NULL; dep_upon[1] = lookup[col2 + row2 * ncols];
             switch (cmdarr[2]) {
                 case 1:
-                    updateNode(lookup[i], dep_upon, 1, '+', row1);
+                    updateNode(lookup[i], dep_upon, 1, '+', cmdarr[4]);
                     break;
                 case 2:
-                    updateNode(lookup[i], dep_upon, 1, '-', row1);
+                    updateNode(lookup[i], dep_upon, 1, '-', cmdarr[4]);
                     break;
                 case 3:
-                    updateNode(lookup[i], dep_upon, 1, '*', row1);
+                    updateNode(lookup[i], dep_upon, 1, '*', cmdarr[4]);
                     break;
                 case 4:
-                    updateNode(lookup[i], dep_upon, 1, '/', row1);
+                    updateNode(lookup[i], dep_upon, 1, '/', cmdarr[4]);
                     break;
             }
         }
-        else if (col2 == 0) {
+        else if (cmdarr[5] == 0) {
             nalloc(col1, row1);
             struct Node **dep_upon = (struct Node **)malloc(sizeof(struct Node *));
             dep_upon[0] = lookup[col1 + row1 * ncols];
             switch (cmdarr[2]) {
                 case 1:
-                    updateNode(lookup[i], dep_upon, 1, '+', row2);
+                    updateNode(lookup[i], dep_upon, 1, '+', cmdarr[6]);
                     break;
                 case 2:
-                    updateNode(lookup[i], dep_upon, 1, '-', row2);
+                    updateNode(lookup[i], dep_upon, 1, '-', cmdarr[6]);
                     break;
                 case 3:
-                    updateNode(lookup[i], dep_upon, 1, '*', row2);
+                    updateNode(lookup[i], dep_upon, 1, '*', cmdarr[6]);
                     break;
                 case 4:
-                    updateNode(lookup[i], dep_upon, 1, '/', row2);
+                    updateNode(lookup[i], dep_upon, 1, '/', cmdarr[6]);
                     break;
             }
         }
@@ -407,8 +414,8 @@ int process_cmdarr()
     /* Function */
     else {
         if (cmdarr[2] == 10) {
-            if (col1 == 0)
-                updateNode(lookup[i], NULL, 0, 'l', row1);
+            if (cmdarr[3] == 0)
+                updateNode(lookup[i], NULL, 0, 'l', cmdarr[4]);
             else {
                 nalloc(col1, row1);
                 struct Node **dep_upon = (struct Node **)malloc(sizeof(struct Node *));
@@ -422,7 +429,7 @@ int process_cmdarr()
             for (int j = row1; j <= row2; j++)
                 for (int k = col1; k <= col2; k++) {
                     nalloc(k, j);
-                    dep_upon[j * c + k] = lookup[j * ncols + k];
+                    dep_upon[(j - row1) * (c + 1) + (k - col1)] = lookup[j * ncols + k];
                 }
             switch (cmdarr[2]) {
                 case 5:
@@ -452,7 +459,7 @@ void nalloc(int col, int row) {
     if (lookup[i] != NULL) return;
 
     char *name = (char *)malloc(7 * sizeof(char));
-    char colname[4]; int j = 0, k = 0;
+    char colname[4]; char rowname[12]; int j = 0, k = 0;
 
     while (col >= 0) {
         colname[j++] = 'A' + (col % 26);
@@ -466,7 +473,9 @@ void nalloc(int col, int row) {
     }
     colname[j] = '\0';
 
-    sprintf(name, "%s%d", colname, row + 1);
+    strcpy(name, colname);
+    sprintf(rowname, "%d", row + 1);
+    strcat(name, rowname);
 
     lookup[i] = (struct Node *)malloc(sizeof(struct Node));
     lookup[i]->name = name;
