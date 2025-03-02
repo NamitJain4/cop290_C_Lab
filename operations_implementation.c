@@ -226,7 +226,7 @@ int calcValue(struct Node *node) {
         }
         return m;
     } else if (node->opcode == 'S') {
-        double mean = 0;
+        int mean = 0;
         for (int i = 0; i < node->dCount; i++) {
             mean += node->dependent_upon[i]->value;
         }
