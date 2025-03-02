@@ -1,0 +1,111 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{titlesec}
+\usepackage{lipsum}
+\usepackage{setspace}
+\usepackage{graphicx}
+
+\title{\LARGE COP290 C_LAB}
+\author{
+    Ayush Ahuja - 2023CS50911\\
+    Namit Jain - 2023CS10483\\
+    Rishabh Narayanan - 2023CS10577
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\subsection{GitHub Repository}
+\url{https://github.com/your-repository-link}
+
+\subsection{Demo Video}
+\url{https://your-demo-video-link}
+
+\newpage
+
+\section{Summary of Code Implementation}
+
+\singlespacing % Set line spacing to single
+
+\subsection{common.h}
+\begin{itemize}
+    \item Defines the Node structure to represent spreadsheet cells, including dependencies, operators, and error handling fields.
+    \item Declares global variables for spreadsheet dimensions, execution status, and a lookup table for cell references.
+    \item Provides function prototypes for printing the sheet and updating node values.
+\end{itemize}
+
+\subsection{main.c}
+\begin{itemize}
+    \item Implements command parsing and spreadsheet initialization.
+    \item Handles user inputs, including arithmetic expressions, function calls (SUM, MAX, etc.), and scrolling commands.
+    \item Manages memory allocation for cells and updates the execution status after processing commands.
+    \item Parses and processes formulas, ensuring error detection for invalid syntax, out-of-bounds cells, and circular dependencies.
+\end{itemize}
+
+\subsection{operations\_implementation.c}
+\begin{itemize}
+    \item Implements core arithmetic operations (+, -, *, /) and spreadsheet functions like SUM, AVG, STDEV, MIN, MAX and SLEEP.
+    \item Uses topological sorting (sort) to determine computation order and detect cycles.
+    \item The updateNode function updates a cell’s value based on dependencies, recalculating only affected nodes.
+    \item Handles division-by-zero errors and circular dependencies, marking affected nodes as erroneous.
+\end{itemize}
+
+\subsection{print\_sheet.c}
+\begin{itemize}
+    \item Implements the spreadsheet display functionality, printing a subset of cells based on user scrolling.
+    \item Manages display control variables (print\_arr[]) to enable/disable output and adjust visible regions.
+    \item Ensures proper formatting of cell values, including error indicators (ERR).
+    \item Supports user commands for scrolling (w, a, s, d) and direct cell focus (scroll\_to \<CELL\>).
+\end{itemize}
+
+\section{Challenges Faced}
+
+\subsection{Parser Implementation}
+\begin{itemize}
+    \item Parsing from left to right using case analysis revealed numerous edge cases initially overlooked.
+    \item Key challenges included handling signs preceding constants, distinguishing between signed and unsigned integers, and correctly processing cell row numbers that do not start at zero.
+\end{itemize}
+
+\subsection{Dependency Graph Construction}
+\begin{itemize}
+    \item Implementing topological sorting with cycle detection posed significant difficulties.
+    \item Additionally, dynamic memory management introduced challenges, particularly in debugging segmentation faults caused by inadvertent dereferencing of NULL pointers.
+\end{itemize}
+
+\subsection{Sheet Rendering}
+\begin{itemize}
+    \item Extending the existing implementation to support additional functionalities required careful modification.
+    \item Challenges included efficiently handling multi-type content (integers and error values) and correctly accessing data stored in a row-major format.
+\end{itemize}
+
+\subsection{File Linking and Modularization}
+\begin{itemize}
+    \item Structuring the codebase effectively required careful consideration of header file contents, function calls across modules, and ensuring seamless data accessibility across different components.
+\end{itemize}
+
+\newpage
+\section{Important Edge Cases and Error Scenarios Covered by Test Suite}
+
+\begin{itemize}
+    \item \textbf{A2=2-A1}: Handling arithmetic expressions with RHS containing one cell and one constant.
+    \item \textbf{A1=-1++2}: Handling explicit mention of the sign.
+    \item \textbf{A1=2/0}: Handling division by zero (All dependent cell contents become ERR).
+    \item \textbf{A1=B1; B1=A1}: Handling cyclical dependency (Error msg: cycle detected).
+    \item \textbf{A1=hello}: Invalid command (Error msg: unrecognized cmd).
+    \item \textbf{A0=3}: Invalid cell (Error msg: unrecognized cmd).
+    \item \textbf{A1=MAX(D6:B1)}: Invalid range (Error msg: unrecognized cmd).
+\end{itemize}
+
+\newpage
+\section{Program Structure and Design Decisions}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{program_structure_diagram.png}
+    \caption{Overall Program Structure and Design Decisions}
+    \label{fig:program_structure}
+\end{figure}
+
+\end{document}
