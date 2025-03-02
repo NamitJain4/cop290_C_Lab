@@ -1,5 +1,7 @@
 #include "common.h"
 
+extern struct Node **lookup;
+
 /*
 for print_arr -----------------------------------------------------------------
 0th index - disable(0 or 1)
@@ -66,8 +68,8 @@ void printSheet () {
     for (int i = min_col; i <= max_col; i++) {
         int length = 0;
         int k = i;
-        while (k > 0) {
-            k = k / 26;
+        while (k >= 0) {
+            k = (k / 26) - 1;
             length++;
         }
         length = MAX(1, length) + 1;
@@ -77,7 +79,7 @@ void printSheet () {
         k = i;
         while (length--) {
             s[length] = (char)('A' + (k % 26));
-            k /= 26;
+            k = (k / 26) - 1;
         }
         printf("\t%s", s);
         free(s);
@@ -86,7 +88,7 @@ void printSheet () {
         printf("\n");
         printf("%d", (i + 1));
         for (int j = min_col; j <= max_col; j++) {
-            int index = i*nrows + j;
+            int index = i*ncols + j;
             if (lookup[index] == NULL){
                 printf("\t%d", 0);
             }
