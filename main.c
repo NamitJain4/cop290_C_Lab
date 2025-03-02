@@ -355,20 +355,27 @@ int process_cmdarr()
         }
         else if (cmdarr[3] == 0) {
             nalloc(col2, row2);
-            struct Node **dep_upon = (struct Node **)malloc(2 * sizeof(struct Node *));
-            dep_upon[0] = NULL; dep_upon[1] = lookup[col2 + row2 * ncols];
+            struct Node **dep_upon;
+            if (cmdarr[2] == 2 || cmdarr[2] == 4) {
+                dep_upon = (struct Node **)malloc(2 * sizeof(struct Node *));
+                dep_upon[0] = NULL; dep_upon[1] = lookup[col2 + row2 * ncols];
+            }
+            else {
+                dep_upon = (struct Node **)malloc(sizeof(struct Node *));
+                dep_upon[0] = lookup[col2 + row2 * ncols];
+            }
             switch (cmdarr[2]) {
                 case 1:
                     updateNode(lookup[i], dep_upon, 1, '+', cmdarr[4]);
                     break;
                 case 2:
-                    updateNode(lookup[i], dep_upon, 1, '-', cmdarr[4]);
+                    updateNode(lookup[i], dep_upon, 2, '-', cmdarr[4]);
                     break;
                 case 3:
                     updateNode(lookup[i], dep_upon, 1, '*', cmdarr[4]);
                     break;
                 case 4:
-                    updateNode(lookup[i], dep_upon, 1, '/', cmdarr[4]);
+                    updateNode(lookup[i], dep_upon, 2, '/', cmdarr[4]);
                     break;
             }
         }
