@@ -1,5 +1,5 @@
 # Arguments (./sheet r c)
-ARGS = r c
+ARGS = r c # random value
 
 # Input file
 INPUT = input.txt
@@ -14,15 +14,18 @@ EXPECTED = expected_output.txt
 
 # Default command which will run
 all: evaluator sheet
-	./sheet $(ARGS) < $(INPUT) > $(OUTPUT)
-	./evaluator $(OUTPUT) $(EXPECTED)
+#	./sheet $(ARGS) < $(INPUT) > $(OUTPUT)
+#	./evaluator $(OUTPUT) $(EXPECTED)
 
 # compile the source files 
-sheet: main.c
-	gcc -o sheet main.c
+sheet: main.o print_sheet.o operations_implementation.o
+	gcc -o $@ $^
 
-evaluator: evaluator.c
-	gcc -o evaluator evaluator.c
+evaluator: evaluator.o
+	gcc -o $@ $^
+
+%.o: %.c
+    gcc -c $< -o $@	
 
 # cleaning up the executbles produced
 clean:
