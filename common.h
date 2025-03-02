@@ -34,6 +34,8 @@ struct Node {
 extern int nrows; // (1..)
 extern int ncols; // (1..)
 extern int print_arr[9];
+extern char *exec_status;
+extern char *ERR2;
 extern struct Node **lookup;
 
 // Function declarations
