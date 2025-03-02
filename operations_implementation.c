@@ -23,8 +23,6 @@ void sort(struct Node **order[], int *length, struct Node *node, int *cycle);
 void set_visited_to_zero(struct Node *order[], int length);
 void set_node_to_error(struct Node *node);
 
-// taking a pointer to a (pointer to a node) array
-// (because realloc may change the address of the array of pointers entirely, and that wouldn't be reflected outside the function)
 void sort(struct Node **order[], int *length, struct Node *node, int *cycle) {
     if (node->visited == 1) {
         *cycle = 1;
@@ -51,25 +49,7 @@ void set_visited_to_zero(struct Node *order[], int length) {
     }
 }
 
-// node => pointer to the node that you want to change,
-// dep_upon => array of pointers to the nodes that the current node is going to be dependent upon,
-// dCount => number of nodes in the dep_upon array,
-// opcode => opcode,
-// new_constant => new constant
 void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opcode, int new_constant) {
-    // A1 = 2 - B1, expecting dep_upon = [NULL, B1], dCount = 2
-    // A1 = 2, dCount = 0 and dep_upon = [], new_constant = 2, opcode = +
-    // A1 = B1, new_constant should be 0, opcode should be +
-    // A1 = 2 / B1, new_constant = 2, opcode = /, dep_upon = [NULL, B1], dCount = 2
-    // A1 = B1 / 2, new_constant = 2, opcode = /, dep_upon = [B1], dCount = 1
-    // A1 = B1 / B2, new_constant = 0, opcode = /, dep_upon = [B1, B2], dCount = 2
-    // A1 = max(B1:C2), dep_upon = [C2, B1, B2, C1] (any order), dCount = 4
-    // A1 = 2 * A1, dep_upon = [A1], dCount = 1
-    // A1 = 2 * 3, dep_upon = [], dCount = 0, new_constant = 6
-    // note: in the above example, you must calculate 2*3 and store it in new_constant
-    // for sleep ask ayush
-    // max, min, stdev, avg, sum => dCount >= 2, dep_upon = [start node, end node]
-
 
     struct Node **order = malloc(sizeof(struct Node *));
     int length = 0;
@@ -122,9 +102,6 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
     // update constant
     node->constant = new_constant;
 
-    // change value of the current node
-    // node->value = calcValue(node);
-
     // traverse through the nodes in the dep_upon array
     for (int i = 0; i < node->dCount; i++) {
         // update the dependencies of the nodes in the dep_upon array (add the node)
@@ -150,17 +127,9 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
 
 void set_node_to_error(struct Node *node) {
     node->is_err = 1;
-    // free(node->dependencies);                           // (fix) dependencies should not be free they also should be
-    // node->dependencies = NULL;                          // set to err and dont remove dependencies
-    // node->depCount = 0;
 }
 
 int calcValue(struct Node *node) {
-    if (node->is_err) {
-        // free(node->dependencies);                       // (fix) dependencies should not be free they also should be
-        // node->dependencies = NULL;                      // set to err and dont remove dependencies
-        // node->depCount = 0;        
-    }
     node->is_err = 0;
 
     if (node->dCount == 0) {
