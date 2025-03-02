@@ -142,16 +142,16 @@ void updateNode(struct Node *node, struct Node **dep_upon, int dCount, char opco
 
 void set_node_to_error(struct Node *node) {
     node->is_err = 1;
-    free(node->dependencies);                           // (fix) dependencies should not be free they also should be
-    node->dependencies = NULL;                          // set to err and dont remove dependencies
-    node->depCount = 0;
+    // free(node->dependencies);                           // (fix) dependencies should not be free they also should be
+    // node->dependencies = NULL;                          // set to err and dont remove dependencies
+    // node->depCount = 0;
 }
 
 int calcValue(struct Node *node) {
     if (node->is_err) {
-        free(node->dependencies);                       // (fix) dependencies should not be free they also should be
-        node->dependencies = NULL;                      // set to err and dont remove dependencies
-        node->depCount = 0;        
+        // free(node->dependencies);                       // (fix) dependencies should not be free they also should be
+        // node->dependencies = NULL;                      // set to err and dont remove dependencies
+        // node->depCount = 0;        
     }
     node->is_err = 0;
 
@@ -260,21 +260,21 @@ int calcValue(struct Node *node) {
     }
 }
 
-// void printNodeDetails(struct Node *node) {
-//     printf("Node %s:\n", node->name);
-//     printf("  Value: %d\n", node->value);
-//     printf("  Is Error: %d\n", node->is_err);
-//     printf("  Is Visited: %d\n", node->visited);
-//     printf("  Dependencies: ");
-//     for (int i = 0; i < node->depCount; i++) {
-//         printf("%s ", node->dependencies[i]->name);
-//     }
-//     printf("\n  Dependent upon: ");
-//     for (int i = 0; i < node->dCount; i++) {
-//         printf("%s ", node->dependent_upon[i]->name);
-//     }
-//     printf("\n");
-// }
+void printNodeDetails(struct Node *node) {
+    printf("Node %s:\n", node->name);
+    printf("  Value: %d\n", node->value);
+    printf("  Is Error: %d\n", node->is_err);
+    printf("  Is Visited: %d\n", node->visited);
+    printf("  Dependencies: ");
+    for (int i = 0; i < node->depCount; i++) {
+        printf("%s ", node->dependencies[i]->name);
+    }
+    printf("\n  Dependent upon: ");
+    for (int i = 0; i < node->dCount; i++) {
+        printf("%s ", node->dependent_upon[i]->name);
+    }
+    printf("\n");
+}
 
 
 // int main() {
@@ -440,11 +440,10 @@ int calcValue(struct Node *node) {
 
 //     printf("\n\n-------------------- TC - 5 --------------------\n");
 //     /*
-//     D2 = 3
 //     A1 = 10
-//     B1 = SLEEP(A1)
-//     C1 = B1 + 3
-//     A1 = D2 - 5
+//     B1 = A1 / A2
+//     C1 = B1 + 1
+//     C3 = MAX(A1:)
 //     */
 
 //     // Create nodes
