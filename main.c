@@ -2,7 +2,7 @@
 #include "common.h"
 
 /* Variables */
-float exec_time = 0.0;
+float exec_time = clock();
 char *exec_status = "ok";
 char *cmd;
 char *gp;
@@ -47,6 +47,10 @@ int main(int argc, char *argv[])
 
     while (1) {
         printSheet();
+
+        /* Calculate time elapsed */
+        exec_time = (double)(clock() - exec_time) / CLOCKS_PER_SEC;
+
         /* Display prompt */
         printf("[%.1f] (%s) > ", exec_time, exec_status);
 
@@ -63,6 +67,9 @@ int main(int argc, char *argv[])
             cmd[len++] = c;
         }
         cmd[len] = '\0';
+
+        /* Initialize timer */
+        exec_time = clock();
 
         /* Initialize */
         for (i = 0; i < 7; i++)
