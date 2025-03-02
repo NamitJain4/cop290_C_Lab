@@ -1,4 +1,4 @@
-# Arguments (./sheet r c)
+# Arguments (./spreadsheet r c)
 ARGS = r c # random value
 
 # Input file
@@ -10,25 +10,34 @@ OUTPUT = output.txt
 # Expected output file
 EXPECTED = expected_output.txt
 
+# Target directory
+TARGET_DIR = target/release
+
 .SILENT:
 
 # Default command which will run
-all: evaluator sheet
-#	./sheet $(ARGS) < $(INPUT) > $(OUTPUT)
-#	./evaluator $(OUTPUT) $(EXPECTED)
+all: spreadsheet evaluator move
 
-# compile the source files 
-sheet: main.o print_sheet.o operations_implementation.o
-	gcc -o $@ $^
+# Compile the source files
+spreadsheet: main.o print_sheet.o operations_implementation.o
+	gcc -o $@ $^ -lm  # Added -lm for math library
 
 evaluator: evaluator.o
 	gcc -o $@ $^
 
 %.o: %.c
-    gcc -c $< -o $@	
+	gcc -c $< -o $@
 
-# cleaning up the executbles produced
+# Ensure the target directory exists and move executables
+move: | $(TARGET_DIR)
+	mv spreadsheet $(TARGET_DIR)/
+	mv evaluator $(TARGET_DIR)/
+
+$(TARGET_DIR):
+	mkdir -p $(TARGET_DIR)
+
+# Cleaning up the executables and object files
 clean:
-	rm -f sheet evaluator
+	rm -f $(TARGET_DIR)/spreadsheet $(TARGET_DIR)/evaluator *.o  # Added *.o to clean object files too
 
-.PHONY: all clean
+.PHONY: all clean move
