@@ -267,19 +267,3 @@ int calcValue(struct Node *node) {
         return 0;
     }
 }
-
-void printNodeDetails(struct Node *node) {
-    printf("Node %s:\n", node->name);
-    printf("  Value: %d\n", node->value);
-    printf("  Is Error: %d\n", node->is_err);
-    printf("  Is Visited: %d\n", node->visited);
-    printf("  Dependencies: ");
-    for (int i = 0; i < node->depCount; i++) {
-        printf("%s ", node->dependencies[i]->name);
-    }
-    printf("\n  Dependent upon: ");
-    for (int i = 0; i < node->dCount; i++) {
-        printf("%s ", node->dependent_upon[i]->name);
-    }
-    printf("\n");
-}
