@@ -233,10 +233,10 @@ int calcValue(struct Node *node) {
         mean /= node->dCount;
         double variance = 0;
         for (int i = 0; i < node->dCount; i++) {
-            variance += pow(node->dependent_upon[i]->value - mean, 2);
+            variance += (node->dependent_upon[i]->value - mean) * (node->dependent_upon[i]->value - mean);
         }
         variance /= node->dCount;
-        return (int)sqrt(variance);
+        return (int) round(sqrt(variance));
     } else if (node->opcode == 'a') {
         int sum = 0;
         for (int i = 0; i < node->dCount; i++) {
