@@ -43,7 +43,7 @@ unittest_printsheet: unittest_printsheet.c
 	gcc -o unittest_printsheet unittest_printsheet.c 
 
 testcases_op_impl: testcases_op_impl.c 
-	gcc -o testcases_op_impl testcases_op_impl.c 
+	gcc -o testcases_op_impl testcases_op_impl.c -lm
 
 report: $(PDFFILE)
 
