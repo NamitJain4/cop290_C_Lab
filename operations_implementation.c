@@ -458,6 +458,41 @@ int main() {
     printNodeDetails(&B1_4);
     printNodeDetails(&C1_4);
 
+    printf("\n\n-------------------- TC - 5 --------------------\n");
+    /*
+    D2 = 3
+    A1 = 10
+    B1 = SLEEP(A1)
+    C1 = B1 + 3
+    A1 = D2 - 5
+    */
+
+    // Create nodes
+    struct Node A1_5 = {"A1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node B1_5 = {"B1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node C1_5 = {"C1", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+    struct Node D2_5 = {"D2", 0, NULL, 0, NULL, 0, '+', 0, 0, 0};
+
+    // Initialize values using updateNode
+    updateNode(&A1_5, NULL, 0, '+', 10);
+    updateNode(&D2_5, NULL, 0, '+', 3);
+
+    // Set dependencies
+    struct Node* B1_deps_5[] = {&A1_5};
+    struct Node* C1_deps_5[] = {&B1_5};
+    struct Node* A1_deps_5[] = {&D2_5};
+
+    // Update nodes
+    updateNode(&B1_5, B1_deps_5, 1, 'l', 0);
+    updateNode(&C1_5, C1_deps_5, 1, '+', 3);
+    updateNode(&A1_5, A1_deps_5, 1, '-', 5);
+
+    // Print results
+    printNodeDetails(&A1_5);
+    printNodeDetails(&B1_5);
+    printNodeDetails(&C1_5);
+    printNodeDetails(&D2_5);
+
 
     return 0;
 }
