@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <limits.h>
 #include <unistd.h> // this library is only available on unix based systems and we are allowed to 
                     // use it as mentioned on piazza --for sleep function
 // to run sleep on unix comment out above line
