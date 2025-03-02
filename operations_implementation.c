@@ -1,5 +1,8 @@
 #include "common.h"
 
+extern char *exec_status;
+extern char *ERR2;
+
 /*
                     opcode
 A1 = B1 - B2        -
